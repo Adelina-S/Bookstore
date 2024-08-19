@@ -1,0 +1,58 @@
+﻿@{
+    ViewData["Title"] = "Категории книг";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+@model List<CategoryHTML>
+<div class="text-left">
+    <input class="text-long" placeholder="Название новой базовой категории" id="basic_category" />
+    <input type="button" value="Добавить" onclick="AddNewBasicCategory()" />
+</div>
+<div class="text-left">
+    @foreach (var line in Model)
+    {
+        @line.Tabs
+        @if (line.IsInput)
+        {
+            <input class="text-long" placeholder="@line.Name" id='@line.ButtonCode' />
+            <input type="button" value="Добавить" onclick='AddNewCategory("@line.Code")' />
+        }
+        else
+        {
+            <label>@line.Name</label>
+        }
+        <br />
+    }
+</div>
+@* </div>
+    @foreach (var category in Model)
+{
+    <div class="text-left message">
+        <label>@category.Name</label>
+        <br />&emsp;
+        <input class="text-long" placeholder="Название новой категории" id='@($"add_{category.Code}")' />
+        <input type="button" value="Добавить" onclick='AddNewCategory("@category.Code")'/>
+    </div>
+
+} *@
+<script>
+    function AddNewBasicCategory() { 
+        var categoryName = document.getElementById("basic_category").value;
+        $.post('/Home/CreateNewCategory', { 'name': categoryName },
+            function (data) {
+                if (data.length != 0)
+                    alert(data);
+                else
+                    window.location.reload();
+            });
+    }
+    function AddNewCategory(parentCode) { 
+        var categoryName = document.getElementById("add_"+parentCode).value;
+        $.post('/Home/CreateNewCategory', { 'name': categoryName, 'parentCode': parentCode },
+            function (data) {
+                if (data.length != 0)
+                    alert(data);
+                else
+                    window.location.reload();
+            });
+    }
+</script>

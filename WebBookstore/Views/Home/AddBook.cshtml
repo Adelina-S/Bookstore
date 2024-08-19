@@ -1,0 +1,131 @@
+﻿@{
+    ViewData["Title"] = "Добавление книги";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+<div class="text-center">
+    <h1 class="display-4">Добавление книги</h1>
+</div>
+<div class="text-center message">
+    <p>
+        <label>Выберите писателя</label><br />
+        <input list='authors' id="inputAuthor" autocomplete="off" onchange="removeInvalid(this)">
+        <datalist id='authors'>
+            @foreach(var author in ViewData["Authors"] as List<Author>)
+            {
+                <option author_code='@author.Code'>@($"{author.Surname} {author.Name}")</option>
+            }
+        </datalist>
+        <input type="button" value='Добавить' id="openAddAuthorButton" onclick="AddAuthorForm()">
+        <div hidden id="addAuthorForm">
+            <input placeholder="Имя писателя" id="authorName">
+            <input placeholder="Фамилия писателя" id="authorSurname">
+            <br/>
+            <input type="button" value="Добавить" onclick="AddAuthor()">
+            <input type="button" value="Скрыть" onclick="HideAuthorForm()" >
+        </div>
+    </p>
+    <p>
+        <label>Выберите категорию</label><br/>
+        <select id="inputCategory">
+            @Html.Raw(ViewData["Categories"])
+        </select>
+    </p>
+    <p>
+        <label>Укажите год издания</label><br/>
+        <input type="number" min="1000" max="3000" value="2000" id="inputYear" onchange="removeInvalid(this)" />
+    </p>
+    <p>
+        <label>Укажите наименование книги</label><br />
+        <input type="text" id="inputTitle" onchange="removeInvalid(this)" />
+    </p>
+    <p>
+        <label>Дайте краткое описание книги</label><br />
+        <textarea cols="60" rows="5" id="inputDescription"></textarea>
+    </p>
+    <p>
+        <label>Укажите стоимость книги</label><br />
+        <input type="number" min="0" value="0" id="inputPrice" onchange="removeInvalid(this)" />
+    </p>
+    <p>
+        <input type="button" value="Добавить книгу" onclick="AddBook()"/>
+    </p>
+</div>
+<script>
+    function removeInvalid(element) { 
+        element.classList.remove('invalid');
+    }
+    function AddBook()
+    {
+        var authorElement = document.getElementById('inputAuthor');
+        var author = authorElement.value;
+        alert(author);
+        if (author === "") { authorElement.classList.add('invalid'); return; }
+        var optionList = "";
+        var option2 = $(`#authors>option`).each(function (i) {
+            optionList += i.html;
+        });
+        
+        alert(optionList);
+        var authorOption = $(`#authors>option:contains(${author})`);
+        alert(authorOption.length);
+        if (authorOption.length == 0) 
+        { authorElement.classList.add('invalid'); alert("Такой автор отсутствует. Сперва его необходимо добавить."); return; }
+        var authorCode = authorOption.attr('author_code');
+        var categoryElement = document.getElementById('inputCategory');
+        var categoryCode = categoryElement.value;
+        var yearElement = document.getElementById('inputYear');
+        var year = yearElement.value;
+        if (year < 1000 || year > 3000) { yearElement.classList.add('invalid'); return; }
+        var titleElement = document.getElementById('inputTitle');
+        var title = titleElement.value;
+        if (title === "") { titleElement.classList.add('invalid'); return; }
+        var descriptionElement = document.getElementById('inputDescription');
+        var description = descriptionElement.value;
+        var priceElement = document.getElementById('inputPrice');
+        var price = priceElement.value;
+        if (price < 0) { priceElement.classList.add('invalid'); return; }
+
+        $.post('/Home/AddBook', { 'authorCode': authorCode, 'categoryCode': categoryCode, 'year':year, 'title': title, 'description': description, 'price': price },
+            function (data) {
+                if (data.length != 0)
+                    alert(data);
+                else { 
+                    authorElement.value = '';
+                    descriptionElement.value = '';
+                    titleElement.value = '';
+                    priceElement.value = 0;
+                    alert('Книга добавлена');
+                }
+               
+            });
+    }
+    function AddAuthorForm() { 
+        var form = document.getElementById("addAuthorForm");
+        form.removeAttribute("hidden");
+        var button = document.getElementById("openAddAuthorButton");
+        button.setAttribute("hidden", true);
+    }
+    function HideAuthorForm() {
+        var form = document.getElementById("addAuthorForm");
+        form.setAttribute("hidden", true);
+        var button = document.getElementById("openAddAuthorButton");
+        button.removeAttribute("hidden");
+    }
+    function AddAuthor()  {
+        var authorName = document.getElementById("authorName").value;
+        var authorSurname = document.getElementById("authorSurname").value;
+        $.post('/Home/AddAuthor', { 'name': authorName, 'surname': authorSurname },
+            function (data) {
+                if (data.length != 0)
+                    alert(data);
+                else {
+                    //window.location.reload();
+                    HideAuthorForm();
+                    $.post('/Home/GetAuthorsList', {}, function (data) { $("#authors").html(data); });
+                    document.getElementById("inputAuthor").value = authorSurname + ' ' + authorName;
+                    document.getElementById("authorName").value = "";
+                    document.getElementById("authorSurname").value = "";
+                }
+            });
+    }
+</script>

@@ -1,0 +1,170 @@
+﻿@{
+    ViewData["Title"] = "Книги";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+@model List<Book>
+<div class="text-center withsidenav">
+    <h1 class="display-4">Книги</h1>
+    @if (ViewData.ContainsKey("CurrentCategory"))
+    {    
+        <h2>@ViewData["CurrentCategory"]</h2>
+    }
+    @if (ViewData.ContainsKey("CurrentAuthor"))
+    {
+        <h2>@ViewData["CurrentAuthor"]</h2>
+    }
+    @if (ViewData["CurrentYear"] as string!="")
+    {
+        <h2>@ViewData["CurrentYear"]</h2>
+    }
+</div>
+<div class="sidenav">
+    <label>Фильтры:</label>
+    <br/>
+    <label>Категории:</label>
+    <br />
+    @if (ViewData.ContainsKey("BackCategory"))
+    {
+        <a href='@($"\\Home\\Index?category={ViewData["BackCategory"]}&author={ViewData["CurrentAuthorCode"]}&year={ViewData["CurrentYear"]}")'>Назад</a>
+        <br/>
+    }
+    @foreach (var category in ViewData["Categories"] as List<BookCategory>)
+    {
+        <a href='@($"\\Home\\Index?category={@category.Code}&author={ViewData["CurrentAuthorCode"]}&year={ViewData["CurrentYear"]}")'>@category.Name</a>
+        <br/>
+    }
+    <label>Авторы:</label>
+    <br />
+    @if (ViewData.ContainsKey("BackAuthor"))
+    {
+        <a href='@($"\\Home\\Index?category={ViewData["CurrentCategoryCode"]}&author=&year={ViewData["CurrentYear"]}")'>Назад</a>
+        <br />
+    }
+    else
+    {
+        @foreach (var authorGroup in ViewData["Authors"] as List<(Author, int)>)
+        {
+            <a href='@($"\\Home\\Index?category={ViewData["CurrentCategoryCode"]}&author={authorGroup.Item1.Code}&year={ViewData["CurrentYear"]}")'>@($"{authorGroup.Item1.FullName} ({authorGroup.Item2})")</a>
+            <br />
+        }
+
+    }
+    <label>Годы издания:</label>
+    <br />
+    @if (ViewData.ContainsKey("BackYear"))
+    {
+        <a href='@($"\\Home\\Index?category={ViewData["CurrentCategoryCode"]}&author={ViewData["CurrentAuthorCode"]}&year=")'>Назад</a>
+        <br />
+    }
+    else
+    {
+        @foreach (var yearGroup in ViewData["Years"] as List<(int, int)>)
+        {
+            <a href='@($"\\Home\\Index?category={ViewData["CurrentCategoryCode"]}&author={ViewData["CurrentAuthorCode"]}&year={yearGroup.Item1}")'>@($"{yearGroup.Item1} ({yearGroup.Item2})")</a>
+            <br />
+        }
+
+    }
+</div>
+<div class="text-center withsidenav">
+   
+    <table class="table-bordered">
+        @for (int i=0;i<Model.Count;)
+        {
+            <tr>
+            @for (int j=0;j<4;j++,i++)
+            {
+                
+                <td class="book">
+                @if (Model.Count>i)
+                {
+                            <label class="book-title height-20">@Model[i].Card.Title</label>
+                            <br/>
+                            <label class="book-author height-20">@($"{Model[i].Card.Author.FullName}, {Model[i].Card.Year} г")</label>
+                            <br/>
+                            <label class="book-description message-text-short">@Model[i].Card.Description</label>
+                            <br/>
+                            <label class="book-price height-20">@($"{Model[i].Price}") Р</label>
+                            <br/>
+                            <label class="height-20">@Model[i].Status</label>
+                            <br/>
+                            @if (Model[i].IsBlocked || Model[i].IsReserved || Model[i].IsMoved)
+                            {
+                                <select disabled class="height-30">
+                                    <option>Не доступно</option>
+                                </select>
+                                <input value="Отправить заявку" disabled />
+                            }
+                            else
+                            {
+                                <select id="select_@Model[i].Id" class="height-30">
+                                    <option value="0">Аренда на 2 недели</option>
+                                    <option value="1">Аренда на месяц</option>
+                                    <option value="2">Аренда на 3 месяца</option>
+                                    <option value="3">Выкупить</option>
+                                </select>
+                                <input type="button" value="Отправить заявку" select_id="select_@Model[i].Id" book_id="@Model[i].Id" onclick="MakeReservation(this)" />
+                            }       
+                  @*   <p class="book-title height-20">
+                        <label>@Model[i].Card.Title</label>
+                    </p>
+                    <p class="book-author height-20">
+                        <label>@($"{Model[i].Card.Author.FullName}, {Model[i].Card.Year} г")</label>
+                    </p>
+                    <p class="book-description">
+                        <label class="message-text-short">@Model[i].Card.Description</label>
+                    </p>
+                    <p class="book-price height-20">
+                        <label>@($"{Model[i].Price}") Р</label>
+                    </p>
+                    <p class="height-20">
+                        <label>@Model[i].Status</label>
+                    </p>
+                    @if (Model[i].IsBlocked || Model[i].IsReserved || Model[i].IsMoved)
+                    {
+                        <select disabled class="height-20">
+                            <option>Не доступно</option>
+                        </select>
+                        <input value="Отправить заявку" disabled/>
+                    }
+                    else
+                    {
+                        <select id="select_@Model[i].Id">
+                            <option value="0">Аренда на 2 недели</option>
+                            <option value="1">Аренда на месяц</option>
+                            <option value="2">Аренда на 3 месяца</option>
+                            <option value="3">Выкупить</option>
+                        </select>
+                                <input type="button" value="Отправить заявку" select_id="select_@Model[i].Id" book_id="@Model[i].Id" onclick="MakeReservation(this)" />
+                    } *@
+                }
+                else
+                {
+                        
+                } 
+                </td>
+            }
+            </tr>
+        }
+    </table>
+</div>
+<script>
+
+    function MakeReservation(button) {
+        var bookId = button.getAttribute('book_id');
+        var selectId = button.getAttribute('select_id');
+        var reservType = $(`#${selectId}`).val();
+        $.post('/Home/TryReserveBook', { 'bookId': bookId, 'reservType': reservType },
+            function (data) {
+                if (data.length != 0)
+                    alert(data);
+                else
+                    location.reload();
+            })
+            .fail(function (xhr) {
+                if (xhr.status == 401) window.location.replace('/Home/Login');
+                else alert(`Ошибка сервера: ${xhr.status}`);
+                
+            });
+    }
+</script>

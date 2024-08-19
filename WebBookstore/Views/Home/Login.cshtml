@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "Авторизация";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Авторизация</h1>
+</div>
+<div class="text-center">
+    <p>
+        <label>Введите Логин</label><br />
+        <input id='login' required />
+    </p>
+    <p>
+        <label>Введите Пароль</label><br />
+        <input type='password' id='password' required />
+    </p>
+    <input type='button' value='Войти' onclick="Login()"/>
+    <input type="button" value="Зарегистрироваться" onclick="document.location='/Home/Register'" />
+</div>
+
+<script>
+    //Код логгирования в системе
+    function Login() {
+        var login = document.getElementById("login").value;
+        var password = document.getElementById("password").value;
+        $.post('/Home/Login', { 'login': login, 'password': password },
+            function (data) {
+                if (data.length != 0)
+                    alert(data);
+                else
+                    window.location.replace('/Home/Index');
+            });
+    }
+</script>

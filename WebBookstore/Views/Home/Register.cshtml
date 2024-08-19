@@ -1,0 +1,59 @@
+﻿@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Регистрация";
+}
+<div class="text-center">
+    <h1 class="display-4">Регистрация</h1>
+</div>
+<div class="text-center">
+    <p>
+        <label>Введите Логин</label><br />
+        <input required id="login" />
+    </p>
+    <p>
+        <label>Введите Имя</label><br />
+        <input required id="userName" />
+    </p>
+    <p>
+        <label>Введите Пароль</label><br />
+        <input type='password' required id="password" />
+    </p>
+    <p>
+        <label>Повторите Пароль</label><br />
+        <input type='password' required id="confirm" />
+    </p>
+    <input type="button" value='Зарегистрироваться' onclick="RegisterJS()" />
+    <input type='button' value='Вернуться' onclick="document.location='/Home/Login'" />
+</div>
+<script>
+    function RegisterJS() {
+        var login = document.getElementById("login").value;
+        var password = document.getElementById("password").value;
+        var userName = document.getElementById("userName").value;
+        var checkResult = CheckPassword(login, password);
+        if (checkResult == false) return;
+        $.post('/Home/Register', { 'login': login, 'password': password, 'name': userName },
+            function (data) {
+                if (data.length != 0)
+                    alert(data);
+                else
+                    window.location.replace('/Home/Index');
+            });
+    }
+    function CheckPassword(login, password) {
+        if (login.length == 0 || login.length > 20) {
+            alert("Поле Login должно содержать от 1 до 20 символов!");
+            return false;
+        }
+        var confirm = document.getElementById("confirm").value;
+        if (password.length <= 4 || password.length > 20) {
+            alert("Пароль должен содержать от 5 до 20 символов!");
+            return false;
+        }
+        if (password != confirm) {
+            alert("Пароль не совпадает с подтверждением!");
+            return false;
+        }
+        return true;
+    }
+</script>
