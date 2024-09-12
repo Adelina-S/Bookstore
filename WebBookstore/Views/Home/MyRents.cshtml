@@ -1,0 +1,80 @@
+﻿@{
+    ViewData["Title"] = "Мои Аренды";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+@model List<Book>
+<div class="text-center">
+    <h1 class="display-4">Книги в моей аренде</h1>
+</div>
+<div>
+    <p>
+        <input type="button" value="Вернуть досрочно" onclick="returnBook()" class="bookButton" disabled />
+    </p>
+</div>
+<div class="text-center">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Название</th>
+                <th>Автор</th>
+                <th>Категория</th>
+                <th>Год издания</th>
+                <th>Стоимость</th>
+                <th>Статус</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <tr id="@($"table_row_{i}")" onclick="selectRow(this)">
+                    <td hidden name="bookId">@Model[i].Id</td>
+                    <td>@(i + 1)</td>
+                    <td>@Model[i].Card.Title</td>
+                    <td>@Model[i].Card.Author.FullName</td>
+                    <td>@Model[i].Card.Category.Name</td>
+                    <td>@Model[i].Card.Year</td>
+                    <td name="bookPrice">@Model[i].Price</td>
+                    <td>@Model[i].Status</td>
+                </tr>
+            }
+        </tbody>
+
+    </table>
+</div>
+<script>
+    function selectRow(row) {
+        var sameRow = row.classList.contains('isSelected');
+        $("tbody>tr").removeClass('isSelected');
+        if (sameRow == false) {
+            $(".bookButton").removeAttr('disabled');
+            row.classList.add('isSelected');
+            document.getElementById('inputPrice').value = $(`tbody>#${row.id}>[name='bookPrice']`)[0].innerHTML.replace(',', '.');
+        }
+        else {
+            $(".bookButton").attr('disabled', 'disabled');
+        }
+    }
+    function getBookId() {
+        var selectedRow = $("tbody tr.isSelected");
+        if (selectedRow.length > 0) {
+            var bookId = $(`#${selectedRow[0].id} [name='bookId']`)[0].innerHTML;
+            return bookId;
+        }
+        else return null;
+    }
+    function returnBook()
+    {
+        var bookId = getBookId();
+
+        if (bookId != null) {
+            $.post('/Home/ReturnBook', { 'bookId': bookId },
+                function (data) {
+                    if (data.length != 0)
+                        alert(data);
+                    else
+                        location.reload();
+                });
+        }
+    }
+</script>

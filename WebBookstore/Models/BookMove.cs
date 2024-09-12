@@ -12,10 +12,11 @@ namespace WebBookstore.Models
         [Required]
         public User User { get; set; }
         public BookMoveType BlockType { get; set; }
+        public List<AutoWarning> WarningsList { get; set; }
         public bool isFinished { get; set; }
         public BookMove()
         {
-
+            WarningsList = new List<AutoWarning>();
         }
         public BookMove(Book book, User user, BookMoveType blockType, DateTime endTime):this()
         {

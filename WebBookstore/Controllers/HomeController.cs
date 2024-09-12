@@ -20,6 +20,7 @@ namespace WebBookstore.Controllers
         private void CheckUser()
         {
             if (HttpContext == null) return;
+            Database.AnyUserEnter();
             var login = HttpContext.User?.Identity?.Name;
             if (login != null)
             {
@@ -118,7 +119,7 @@ namespace WebBookstore.Controllers
         public string TryReserveBook(int bookId, int reservType)
         {
             CheckUser();
-            if (reservType < 0 || reservType > 3) return "Ошибка передачи данных";
+            if (reservType < 0 || reservType > 3) return "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
             return Database.CreateReservation(bookId, User, (BookMoveType)reservType);
         }
         [HttpGet]
@@ -133,7 +134,7 @@ namespace WebBookstore.Controllers
             CheckUser();
             User result = Database.GetUser(login);
             if (result == null || result.Password != password)
-                return "Неверное имя или пароль";
+                return "РќРµРІРµСЂРЅС‹Р№ Р»РѕРіРёРЅ РёР»Рё РїР°СЂРѕР»СЊ";
             else
             {
                 List<Claim> claims = new List<Claim>()
@@ -179,7 +180,7 @@ namespace WebBookstore.Controllers
         }
         [HttpPost, Authorize(Roles = "Administrator")]
         public string AddBook(string authorCode, string categoryCode, int year, string title, string description, string price)
-        {
+         {
             CheckUser();
             var bookCard = Database.GetBookCard(title, year, authorCode, categoryCode);
             if (bookCard != null)
@@ -212,7 +213,8 @@ namespace WebBookstore.Controllers
             List<string> result = new List<string>();
             foreach (var author in authors)
             {
-                result.Add($"<option author_code={author.Code} value='{author.Surname} {author.Name}'></option>");
+                //result.Add($"<option data_author={author.Code} value='{author.Surname} {author.Name}'></option>");
+                result.Add($"<option data-author='{author.Code}'>{author.Surname} {author.Name}</option>");
             }
             return string.Join('\n', result);
         }
@@ -261,6 +263,12 @@ namespace WebBookstore.Controllers
             CheckUser();
             return Database.AcceptMove(bookId, User);
         }
+        [HttpPost, Authorize(Roles = "Administrator")]
+        public string RemindRent(int bookId)
+        {
+            CheckUser();
+            return Database.RemindRent(bookId, User);
+        }
         [HttpGet, Authorize]
         public IActionResult Messages()
         {
@@ -273,6 +281,24 @@ namespace WebBookstore.Controllers
         {
             CheckUser();
             return Database.DeleteMessages(User, messageList);
+        }
+        [HttpGet, Authorize]
+        public IActionResult MyRents()
+        {
+            CheckUser();
+            var books = Database.GetRentBooks(User);
+            return View("Views/Home/MyRents.cshtml", books);
+        }
+        [HttpPost, Authorize]
+        public string ReturnBook(int bookId)
+        {
+            CheckUser();
+            return Database.ReturnBook(bookId, User);
+        }
+        class Person()
+        {
+            public string name { get; set; }
+            public int age { get; set; }
         }
     }
 }

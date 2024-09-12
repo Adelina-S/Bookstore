@@ -18,6 +18,7 @@ namespace WebBookstore
         public DbSet<BookReservation> BookReservations { get; set; }
         public DbSet<BookMove> BookMoves { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<AutoWarning> AutoWarnings { get; set; }
 
         public ApplicationContext()
         {
@@ -49,8 +50,10 @@ namespace WebBookstore
             modelBuilder.Entity<BookReservation>().Navigation(t => t.User).AutoInclude();
             modelBuilder.Entity<BookMove>().Navigation(t => t.Book).AutoInclude();
             modelBuilder.Entity<BookMove>().Navigation(t => t.User).AutoInclude();
+            modelBuilder.Entity<BookMove>().Navigation(t => t.WarningsList).AutoInclude();
             modelBuilder.Entity<Message>().Navigation(t => t.Target).AutoInclude();
             modelBuilder.Entity<Message>().Navigation(t => t.Book).AutoInclude();
+            modelBuilder.Entity<AutoWarning>().Navigation(t=>t.BookMove).AutoInclude();
         }
 
         public Dictionary<RoleType, Role> GetRoles() => Roles.ToDictionary(t => t.Type);
@@ -225,10 +228,16 @@ namespace WebBookstore
             AddStatuses(books);
             return books;
         }
+        public List<Book> GetRentBooks(User user)
+        {
+            var books=BookMoves.Where(t=>t.isFinished==false && t.User==user).Select(t=>t.Book).ToList();
+            AddStatuses(books);
+            return books;
+        }
         public void AddStatuses(List<Book> books)
         {
             var reservations = BookReservations.Where(r => r.isFinished == false && books.Select(b => b.Id).Contains(r.Book.Id)).ToList();
-            var moves = BookMoves.Where(r => r.isFinished == false && books.Select(b => b.Id).Contains(r.Id)).ToList();
+            var moves = BookMoves.Where(r => r.isFinished == false && books.Select(b => b.Id).Contains(r.Book.Id)).ToList();
             foreach (var book in books)
             {
                 book.Status = "";
@@ -340,6 +349,7 @@ namespace WebBookstore
             SaveChanges();
             return "";
         }
+        public BookMove GetRent(int bookId) => BookMoves.FirstOrDefault(t => t.Book.Id == bookId && t.isFinished == false);
         public string AcceptMove(int bookId, User owner)
         {
             BookReservation bookReservation = GetReservation(bookId);
@@ -352,6 +362,15 @@ namespace WebBookstore
                 bookReservation.Book.IsSold = true;
                 move.isFinished = true;
             }
+            else
+            {
+                AutoWarning oneDayWarning = new AutoWarning(endTime - TimeSpan.FromDays(1), move);
+                AutoWarning threeDayWarning = new AutoWarning(endTime - TimeSpan.FromDays(3), move);
+                AutoWarning sevenDayWarning = new AutoWarning(endTime - TimeSpan.FromDays(7), move);
+                move.WarningsList.Add(oneDayWarning);
+                move.WarningsList.Add(threeDayWarning);
+                move.WarningsList.Add(sevenDayWarning);
+            }
             bookReservation.isFinished = true;
             BookMoves.Add(move);
             string messageText = "";
@@ -359,6 +378,19 @@ namespace WebBookstore
             if (bookReservation.MoveType != BookMoveType.Buy)
                 messageText += $" Окончание действия аренды {endTime.ToString("dd.MM.yyyy")}.";
             Message toTargetMessage = new Message(bookReservation.User, messageText, bookReservation.Book);
+            Messages.Add(toTargetMessage);
+            SaveChanges();
+            return "";
+        }
+        public string RemindRent(int bookId, User owner)
+        {
+            BookMove bookMove = GetRent(bookId);
+            if (bookMove == null) return "Аренда не найдено";
+            if (bookMove.Book.Owner != owner) return "Вы не являетесь владельцем данной книги";
+            DateTime endTime = bookMove.EndTime;
+            string messageText = "";
+            messageText = $"Уважаемый/ая {bookMove.User.Name}, напоминаем, что Ваша {Common.BookAppendMoveInfo(bookMove.BlockType)} книги {bookMove.Book.Card.Title} до {endTime.ToString("dd.MM.yyyy")} истекает через {(int)((endTime-DateTime.Now).TotalDays)} дней.";
+            Message toTargetMessage = new Message(bookMove.User, messageText, bookMove.Book);
             Messages.Add(toTargetMessage);
             SaveChanges();
             return "";
@@ -386,16 +418,43 @@ namespace WebBookstore
         public void AnyUserEnter()
         {
             var endMoves = BookMoves.Where(t => t.isFinished == false && t.EndTime <= DateTime.Now).ToList();
-            if (endMoves.Count == 0) return;
-            foreach (var move in endMoves)
+            if (endMoves.Count > 0)
             {
-                var messageToUser = new Message(move.User, $"Ваша {Common.BookAppendMoveInfo(move.BlockType)} книги {move.Book.Card.Title} истекла.", move.Book);
-                var messageToOwner = new Message(move.Book.Owner, $"А{Common.BookAppendMoveInfo(move.BlockType).Substring(1)} книги {move.Book.Card.Title} истекла.", move.Book);
-                Messages.Add(messageToUser);
-                Messages.Add(messageToOwner);
-                move.isFinished = true;
+                foreach (var move in endMoves)
+                {
+                    var messageToUser = new Message(move.User, $"Ваша {Common.BookAppendMoveInfo(move.BlockType)} книги {move.Book.Card.Title} истекла.", move.Book);
+                    var messageToOwner = new Message(move.Book.Owner, $"А{Common.BookAppendMoveInfo(move.BlockType).Substring(1)} книги {move.Book.Card.Title} истекла.", move.Book);
+                    Messages.Add(messageToUser);
+                    Messages.Add(messageToOwner);
+                    move.isFinished = true;
+                }
+                SaveChanges();
             }
+            //автоматические предупреждения за неделю, 3 дня и 1 день до окончания аренды
+            var warnings = AutoWarnings.Where(t => t.IsSent == false && t.Date <= DateTime.Now).ToList();
+            if (warnings.Count>0)
+            {
+                foreach (var warning in warnings)
+                {
+                    var messageText = $"Уважаемый/ая {warning.BookMove.User.Name}, напоминаем, что Ваша {Common.BookAppendMoveInfo(warning.BookMove.BlockType)} книги {warning.BookMove.Book.Card.Title} до {warning.BookMove.EndTime.ToString("dd.MM.yyyy")} истекает через {(int)((warning.BookMove.EndTime - DateTime.Now).TotalDays)} дней.";
+                    Messages.Add(new Message(warning.BookMove.User, messageText, warning.BookMove.Book));
+                    warning.IsSent = true;
+                }
+                SaveChanges();
+            }
+        }
+        public string ReturnBook(int bookId, User user)
+        {
+            var move = GetRent(bookId);
+            if (move == null) return "Аренда не найдена";
+            if (move.User != user) return "Вы не являетесь инициатором данной аренды";
+            var messageToOwner = new Message(move.Book.Owner, $"А{Common.BookAppendMoveInfo(move.BlockType).Substring(1)} книги {move.Book.Card.Title} завершена пользователем преждевременно.", move.Book);
+            Messages.Add(messageToOwner);
+            move.isFinished = true;
+            foreach (var warning in move.WarningsList.Where(t=>t.IsSent==false))
+                warning.IsSent = true;
             SaveChanges();
+            return "";
         }
     }
 }

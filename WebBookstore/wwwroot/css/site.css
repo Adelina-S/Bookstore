@@ -35,67 +35,96 @@ body {
 
 .message-text-short {
     white-space: pre-wrap;
-    text-align:justify;
+    text-align: justify;
     max-height: 150px;
     overflow: auto;
     text-overflow: ellipsis;
 }
-.text-long{
+
+.text-long {
     width: 500px;
 }
-/*Пробелы между ссылками, используется в тэгах*/
+/*РџСЂРѕР±РµР»С‹ РјРµР¶РґСѓ СЃСЃС‹Р»РєР°РјРё, РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ С‚СЌРіР°С…*/
 a + a {
     margin-left: 5px;
 }
-.invalid
-{
-    border-color:red;
+
+a {
+    color: #7ba05b;
 }
+
+    a :hover {
+        color #ffd1dc;
+    }
+
+.invalid {
+    border-color: red;
+}
+
 table tbody tr:hover {
-    background-color: #EBECCD;
+    background-color: #f2e8c9;
 }
-table{
-    width:100%;
+
+table {
+    width: 100%;
 }
-table tbody tr {
-    background-color: #dcddc0;
-}
-table tbody tr.isSelected {
-    background-color: red;
-}
+
+    table tbody tr {
+        background-color: #f2e8c9;
+    }
+
+        table tbody tr.isSelected {
+            background-color: #7ba05b;
+        }
+
 .sidenav {
     width: 250px; /* Set the width of the sidebar */
     position: fixed; /* Fixed Sidebar (stay in place on scroll) */
     z-index: 1; /* Stay on top */
-    background-color: #111; /* Black */
+    background-color: white; /* Black */
     /*overflow-x: hidden; /* Disable horizontal scroll */
-    color: white;
+    color: black;
+    border: 1px solid black;
+    padding: 10px;
 }
-.sidenav a{
-    width: 240px;
-    margin: 5px;
+
+    .sidenav label {
+        font-weight: 500;
+    }
+
+    .sidenav a {
+        width: 240px;
+        margin: 5px;
+    }
+
+.withsidenav {
+    margin-left: 250px;
 }
-.withsidenav{
-    margin-left:250px;
-}
-td.book{
+
+td.book {
     width: 200px;
     height: 300px;
+    padding: 10px;
 }
-.height-20{
+
+.height-20 {
     height: 20px;
 }
+
 .height-30 {
     height: 30px;
 }
+
 .book-title {
     font-size: 20px;
 }
+
 .book-author {
     font-size: 12px;
-  /*  text-align: left;
+    /*  text-align: left;
     margin: 20px;*/
 }
+
 .book-description {
     font-size: 12px;
     /*  font-size: 16px;
@@ -106,8 +135,8 @@ td.book{
     text-align: left;
     vertical-align: top;*/
 }
+
 .book-price {
     font-size: 18px;
     color: red;
 }
-

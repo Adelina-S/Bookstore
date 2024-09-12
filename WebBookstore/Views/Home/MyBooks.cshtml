@@ -14,6 +14,7 @@
         <input type="button" value="Заблокировать" onclick="changeBlock(this)" class="bookButton" disabled id="blockButton" />
         <input type="button" value="Принять" onclick="acceptReservation()" class="bookButton" disabled id="acceptButton" />
         <input type="button" value="Отменить" onclick="declineReservation()" class="bookButton" disabled id="declineButton" />
+        <input type="button" value="Напомнить" onclick="remindRent()" class="bookButton" disabled id="remindButton" />
     </p>
 </div>
 <div class="text-center">
@@ -72,6 +73,8 @@
                 $("#acceptButton").attr('disabled', 'disabled');
                 $("#declineButton").attr('disabled', 'disabled');
             }
+            if (isBookMoved == false)
+                $("#remindButton").attr('disabled', 'disabled');
         }
         else { 
             document.getElementById('inputPrice').value = 0;
@@ -82,7 +85,7 @@
         var bookId = getBookId();
 
         if (bookId != null) {
-            var isBLock = getBlock();
+            //var isBLock = getBlock();
             $.post('/Home/AcceptReservation', { 'bookId': bookId },
                 function (data) {
                     if (data.length != 0)
@@ -97,13 +100,28 @@
         var bookId = getBookId();
 
         if (bookId != null) {
-            var isBLock = getBlock();
+            //var isBLock = getBlock();
             $.post('/Home/DeclineReservation', { 'bookId': bookId },
                 function (data) {
                     if (data.length != 0)
                         alert(data);
                     else
                         location.reload();
+                });
+        }
+    }
+    function remindRent()
+    {
+        var bookId = getBookId();
+
+        if (bookId != null) {
+            //var isBLock = getBlock();
+            $.post('/Home/RemindRent', { 'bookId': bookId },
+                function (data) {
+                    if (data.length != 0)
+                        alert(data);
+                    else
+                        alert("Напоминание отправлено");
                 });
         }
     }

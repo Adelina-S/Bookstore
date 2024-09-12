@@ -12,7 +12,7 @@
         <datalist id='authors'>
             @foreach(var author in ViewData["Authors"] as List<Author>)
             {
-                <option author_code='@author.Code'>@($"{author.Surname} {author.Name}")</option>
+                <option data-author='@author.Code'>@($"{author.Surname} {author.Name}")</option>
             }
         </datalist>
         <input type="button" value='Добавить' id="openAddAuthorButton" onclick="AddAuthorForm()">
@@ -58,19 +58,20 @@
     {
         var authorElement = document.getElementById('inputAuthor');
         var author = authorElement.value;
-        alert(author);
+        //alert(author);
         if (author === "") { authorElement.classList.add('invalid'); return; }
-        var optionList = "";
-        var option2 = $(`#authors>option`).each(function (i) {
-            optionList += i.html;
-        });
+        //var optionList = "";
+        //var option2 = $(`#authors>option`).each(function (i) {
+        //    optionList += i.html;
+        //});
         
-        alert(optionList);
+        //alert(optionList);
         var authorOption = $(`#authors>option:contains(${author})`);
-        alert(authorOption.length);
+        //alert(authorOption.length);
         if (authorOption.length == 0) 
         { authorElement.classList.add('invalid'); alert("Такой автор отсутствует. Сперва его необходимо добавить."); return; }
-        var authorCode = authorOption.attr('author_code');
+        var authorCode = authorOption.attr('data-author');
+        //var authorCode = authorOption[0].author;
         var categoryElement = document.getElementById('inputCategory');
         var categoryCode = categoryElement.value;
         var yearElement = document.getElementById('inputYear');
